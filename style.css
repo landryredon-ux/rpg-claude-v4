@@ -310,3 +310,117 @@ select option { background:var(--surface2); color:var(--text); }
   border-left: 2px solid #7B6FEF;
   border-radius: 4px;
 }
+
+/* ══════════════════════════════════════
+   FORMULAIRE BACKGROUND STRUCTURÉ
+══════════════════════════════════════ */
+.bg-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.bg-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.bg-label {
+  font-size: 11px;
+  color: var(--gold-light);
+  font-family: 'Cinzel Decorative', serif;
+  letter-spacing: 0.5px;
+}
+.bg-optional {
+  color: var(--text-hint);
+  font-size: 10px;
+}
+.bg-input {
+  min-height: 70px !important;
+  font-size: 13px !important;
+  padding: 8px 12px !important;
+  line-height: 1.5 !important;
+}
+
+/* SECRETS */
+.secret-block {
+  background: var(--surface);
+  border: 0.5px solid rgba(91,79,207,0.3);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+.secret-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.secret-num {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 11px;
+  color: #7B6FEF;
+  white-space: nowrap;
+}
+.secret-type {
+  flex: 1;
+  font-size: 13px !important;
+  padding: 7px 10px !important;
+  border-color: rgba(91,79,207,0.3) !important;
+  color: var(--text-muted) !important;
+}
+.secret-input { margin-bottom: 10px; }
+.secret-reaction { margin-bottom: 10px; }
+.secret-volonte {}
+
+.volonte-btns {
+  display: flex;
+  gap: 6px;
+  margin-top: 5px;
+  flex-wrap: wrap;
+}
+.volonte-btn {
+  font-family: 'Crimson Pro', serif;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text-hint);
+  background: transparent;
+  border: 0.5px solid var(--border-soft);
+  border-radius: 6px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.volonte-btn:hover { border-color: #7B6FEF; color: #7B6FEF; }
+.volonte-btn.active { border-color: #7B6FEF; color: #7B6FEF; background: rgba(91,79,207,0.1); }
+
+.add-secret-btn {
+  width: 100%;
+  font-family: 'Crimson Pro', serif;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text-hint);
+  background: transparent;
+  border: 0.5px dashed rgba(91,79,207,0.3);
+  border-radius: 8px;
+  padding: 10px;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  transition: all 0.15s;
+}
+.add-secret-btn:hover { border-color: #7B6FEF; color: #7B6FEF; }
+
+.secret-remove {
+  font-size: 10px;
+  color: var(--text-hint);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  margin-left: auto;
+  padding: 2px 6px;
+  transition: color 0.15s;
+}
+.secret-remove:hover { color: var(--danger); }
+
+@media (max-width: 600px) {
+  .bg-grid { grid-template-columns: 1fr; }
+}

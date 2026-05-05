@@ -47,14 +47,77 @@
     <div class="section-label">Nom du personnage</div>
     <input id="char-name-input" type="text" placeholder="Entrez le nom de votre héros..." maxlength="40" />
 
-    <div class="section-label">Background du personnage</div>
-    <textarea id="char-background-input"
-      placeholder="Décrivez librement votre personnage : qui est-il, d'où vient-il, qu'a-t-il vécu, quelles capacités possède-t-il ?&#10;&#10;L'IA analysera votre texte et générera automatiquement ses compétences, son talent inné et ses affinités magiques.">
-    </textarea>
-    <div class="hint-box">
-      <strong>Astuce :</strong> Plus le background est original et détaillé, plus les compétences générées seront uniques.
-      Un être mystérieux venu d'ailleurs aura un talent différent d'un soldat ordinaire.
+    <!-- ══ FORMULAIRE BACKGROUND STRUCTURÉ ══ -->
+    <div class="section-label">Identité du personnage</div>
+    <div class="bg-grid">
+      <div class="bg-field">
+        <label class="bg-label">Apparence & Première impression</label>
+        <textarea id="bg-apparence" class="bg-input" placeholder="Comment se présente-t-il physiquement ? Quelle impression dégage-t-il ?"></textarea>
+      </div>
+      <div class="bg-field">
+        <label class="bg-label">Ce dont il se souvient de lui-même</label>
+        <textarea id="bg-memoire" class="bg-input" placeholder="Ses souvenirs, son passé connu, ce qu'il sait de son histoire..."></textarea>
+      </div>
+      <div class="bg-field">
+        <label class="bg-label">Personnalité & Traits de caractère</label>
+        <textarea id="bg-perso" class="bg-input" placeholder="Comment il pense, réagit, ses forces et faiblesses de caractère..."></textarea>
+      </div>
+      <div class="bg-field">
+        <label class="bg-label">Formation & Expériences vécues</label>
+        <textarea id="bg-formation" class="bg-input" placeholder="Soldat, mage, voleur, marchand... Ce qu'il a appris, vécu, traversé..."></textarea>
+      </div>
+      <div class="bg-field">
+        <label class="bg-label">Lien à la magie <span class="bg-optional">(optionnel)</span></label>
+        <textarea id="bg-magie" class="bg-input" placeholder="A-t-il un lien avec la magie ? Une affinité ressentie, un don inexpliqué..."></textarea>
+      </div>
+      <div class="bg-field">
+        <label class="bg-label">Motivation & But <span class="bg-optional">(optionnel)</span></label>
+        <textarea id="bg-motivation" class="bg-input" placeholder="Ce qui le pousse à agir, ce qu'il cherche ou fuit..."></textarea>
+      </div>
     </div>
+
+    <!-- ══ SECRETS DU PERSONNAGE ══ -->
+    <div class="section-label" style="margin-top:1.4rem;">
+      Secrets du personnage
+      <span class="bg-optional" style="font-family:'Crimson Pro',serif;font-size:11px;letter-spacing:0;text-transform:none;"> — visibles uniquement du Maître du Jeu</span>
+    </div>
+    <div class="hint-box" style="margin-bottom:10px;">
+      <strong>Ces secrets</strong> sont connus de Claude (MJ) mais pas du personnage. Ils influencent comment le monde réagit — les PNJ, les événements, les factions — sans jamais être nommés directement.
+    </div>
+
+    <div id="secrets-container">
+      <div class="secret-block" id="secret-0">
+        <div class="secret-header">
+          <span class="secret-num">Secret 1</span>
+          <select class="secret-type" id="secret-type-0">
+            <option value="Origine inconnue">Origine inconnue</option>
+            <option value="Capacité cachée">Capacité cachée</option>
+            <option value="Prophétie">Prophétie</option>
+            <option value="Lien mystérieux">Lien mystérieux</option>
+            <option value="Identité secrète">Identité secrète</option>
+            <option value="Malédiction">Malédiction</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+        <textarea class="bg-input secret-input" id="secret-desc-0"
+          placeholder="Décris ce secret — ce que le MJ sait et que le personnage ignore..."></textarea>
+        <div class="secret-reaction">
+          <label class="bg-label" style="font-size:11px;">Comment le monde réagit à ce secret</label>
+          <textarea class="bg-input" id="secret-reaction-0" style="min-height:50px;"
+            placeholder="Les PNJ le regardent étrangement, des factions le cherchent, des objets réagissent à sa présence..."></textarea>
+        </div>
+        <div class="secret-volonte">
+          <label class="bg-label" style="font-size:11px;">Le personnage veut-il découvrir ce secret ?</label>
+          <div class="volonte-btns">
+            <button class="volonte-btn active" data-secret="0" data-val="indecis" onclick="setVolonte(this)">Indécis</button>
+            <button class="volonte-btn" data-secret="0" data-val="oui" onclick="setVolonte(this)">Oui, il cherche</button>
+            <button class="volonte-btn" data-secret="0" data-val="non" onclick="setVolonte(this)">Non, il refuse</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="add-secret-btn" onclick="addSecret()">+ Ajouter un secret</button>
 
     <div class="section-label">Construire votre univers</div>
     <div class="select-grid">

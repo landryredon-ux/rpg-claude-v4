@@ -21,6 +21,7 @@ window.pc = {
   }
 };
 window.charBackground = '';
+window.charSecrets = []; // Secrets du personnage (MJ uniquement)
 window.univers = '';
 window.storySummary = '';
 window.actionCount = 0;
@@ -304,10 +305,11 @@ async function fetchWithRetry(body, maxRetries=3) {
 }
 
 function getSystemForMode(mode) {
+  const secrets = buildSecretsPrompt();
   switch(mode) {
-    case 'combat':    return SYSTEM_COMBAT;
-    case 'dialogue':  return SYSTEM_DIALOGUE;
-    default:          return SYSTEM_NARRATEUR;
+    case 'combat':    return SYSTEM_COMBAT + secrets;
+    case 'dialogue':  return SYSTEM_DIALOGUE + secrets;
+    default:          return SYSTEM_NARRATEUR + secrets;
   }
 }
 
@@ -361,10 +363,14 @@ function clearRetryMsg(){const el=document.getElementById('retry-msg');if(el)el.
 async function startGame() {
   if (!window.apiKey) { const s=document.getElementById('api-status'); s.className='api-status err'; s.textContent='⚠ Veuillez sauvegarder votre clé API.'; document.getElementById('api-input').focus(); return; }
   const name = document.getElementById('char-name-input').value.trim();
-  const bg   = document.getElementById('char-background-input').value.trim();
   if (!name) { document.getElementById('char-name-input').style.borderColor='var(--danger)'; document.getElementById('char-name-input').focus(); return; }
-  if (!bg)   { document.getElementById('char-background-input').style.borderColor='var(--danger)'; document.getElementById('char-background-input').focus(); return; }
 
+  // Assembler le background depuis le formulaire structuré
+  const bg = assemblerBackground();
+  if (!bg) return;
+
+  // Récupérer les secrets
+  window.charSecrets = assemblerSecrets();
   window.pc.name = name; window.charBackground = bg; window.univers = buildUnivers();
   document.getElementById('setup-screen').classList.add('hidden');
   document.getElementById('generation-screen').classList.remove('hidden');
@@ -735,6 +741,43 @@ function restartGame(){
   window.pc={name:'',classe:'',talent:'Normal',talentMult:1.0,pvMax:80,pvCur:80,pfMax:80,pfCur:80,pmMax:40,pmCur:40,chance:10,competences:[],affinites:[],etat:'normal',inventaire:[],or:0,argent:0,cuivre:0,jourAbsolu:1,attributs:{force:4,endurance:5,agilite:5,dexterite:5,sante:5,perception:5,intelligence:5,volonte:5,charisme:5,mana:3,affinite_feu:0,affinite_eau:0,affinite_terre:0,affinite_vent:0,affinite_lumiere:0,affinite_ombre:0}};
   if(panelOpen)togglePanel();
   if(skillsPanelOpen)toggleSkillsPanel();
+  // Réinitialiser le formulaire background
+  ['bg-apparence','bg-memoire','bg-perso','bg-formation','bg-magie','bg-motivation'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('secrets-container').innerHTML = `
+    <div class="secret-block" id="secret-0">
+      <div class="secret-header">
+        <span class="secret-num">Secret 1</span>
+        <select class="secret-type" id="secret-type-0">
+          <option value="Origine inconnue">Origine inconnue</option>
+          <option value="Capacité cachée">Capacité cachée</option>
+          <option value="Prophétie">Prophétie</option>
+          <option value="Lien mystérieux">Lien mystérieux</option>
+          <option value="Identité secrète">Identité secrète</option>
+          <option value="Malédiction">Malédiction</option>
+          <option value="Autre">Autre</option>
+        </select>
+      </div>
+      <textarea class="bg-input secret-input" id="secret-desc-0" placeholder="Décris ce secret..."></textarea>
+      <div class="secret-reaction">
+        <label class="bg-label" style="font-size:11px;">Comment le monde réagit</label>
+        <textarea class="bg-input" id="secret-reaction-0" style="min-height:50px;" placeholder="Les PNJ le regardent étrangement..."></textarea>
+      </div>
+      <div class="secret-volonte">
+        <label class="bg-label" style="font-size:11px;">Le personnage veut-il découvrir ce secret ?</label>
+        <div class="volonte-btns">
+          <button class="volonte-btn active" data-secret="0" data-val="indecis" onclick="setVolonte(this)">Indécis</button>
+          <button class="volonte-btn" data-secret="0" data-val="oui" onclick="setVolonte(this)">Oui, il cherche</button>
+          <button class="volonte-btn" data-secret="0" data-val="non" onclick="setVolonte(this)">Non, il refuse</button>
+        </div>
+      </div>
+    </div>`;
+  secretCount = 1;
+  Object.keys(secretVolontes).forEach(k => delete secretVolontes[k]);
+  secretVolontes[0] = 'indecis';
+  window.charSecrets = [];
   checkSavedGame();
 }
 
@@ -842,4 +885,132 @@ function toggleAttrs() {
   if (btn) btn.textContent = attrsOpen
     ? '▲ INT · VOL · CHA · MAN · Affinités'
     : '▼ INT · VOL · CHA · MAN · Affinités';
+}
+
+/* ──────────────────────────────────────────────────────
+   FORMULAIRE BACKGROUND STRUCTURÉ
+────────────────────────────────────────────────────── */
+let secretCount = 1;
+const secretVolontes = { 0: 'indecis' };
+
+function setVolonte(btn) {
+  const secretId = btn.dataset.secret;
+  secretVolontes[secretId] = btn.dataset.val;
+  btn.closest('.volonte-btns').querySelectorAll('.volonte-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function addSecret() {
+  const id = secretCount++;
+  secretVolontes[id] = 'indecis';
+  const container = document.getElementById('secrets-container');
+  const block = document.createElement('div');
+  block.className = 'secret-block';
+  block.id = `secret-${id}`;
+  block.innerHTML = `
+    <div class="secret-header">
+      <span class="secret-num">Secret ${id + 1}</span>
+      <select class="secret-type" id="secret-type-${id}">
+        <option value="Origine inconnue">Origine inconnue</option>
+        <option value="Capacité cachée">Capacité cachée</option>
+        <option value="Prophétie">Prophétie</option>
+        <option value="Lien mystérieux">Lien mystérieux</option>
+        <option value="Identité secrète">Identité secrète</option>
+        <option value="Malédiction">Malédiction</option>
+        <option value="Autre">Autre</option>
+      </select>
+      <button class="secret-remove" onclick="removeSecret(${id})">✕</button>
+    </div>
+    <textarea class="bg-input secret-input" id="secret-desc-${id}"
+      placeholder="Décris ce secret — ce que le MJ sait et que le personnage ignore..."></textarea>
+    <div class="secret-reaction">
+      <label class="bg-label" style="font-size:11px;">Comment le monde réagit à ce secret</label>
+      <textarea class="bg-input" id="secret-reaction-${id}" style="min-height:50px;"
+        placeholder="Les PNJ le regardent étrangement, des factions le cherchent..."></textarea>
+    </div>
+    <div class="secret-volonte">
+      <label class="bg-label" style="font-size:11px;">Le personnage veut-il découvrir ce secret ?</label>
+      <div class="volonte-btns">
+        <button class="volonte-btn active" data-secret="${id}" data-val="indecis" onclick="setVolonte(this)">Indécis</button>
+        <button class="volonte-btn" data-secret="${id}" data-val="oui" onclick="setVolonte(this)">Oui, il cherche</button>
+        <button class="volonte-btn" data-secret="${id}" data-val="non" onclick="setVolonte(this)">Non, il refuse</button>
+      </div>
+    </div>`;
+  container.appendChild(block);
+}
+
+function removeSecret(id) {
+  const block = document.getElementById(`secret-${id}`);
+  if (block) block.remove();
+  delete secretVolontes[id];
+}
+
+function assemblerBackground() {
+  const champs = [
+    { id:'bg-apparence',  label:'Apparence' },
+    { id:'bg-memoire',    label:'Souvenirs' },
+    { id:'bg-perso',      label:'Personnalité' },
+    { id:'bg-formation',  label:'Formation & expériences' },
+    { id:'bg-magie',      label:'Lien à la magie' },
+    { id:'bg-motivation', label:'Motivation' },
+  ];
+
+  const parties = [];
+  champs.forEach(c => {
+    const el = document.getElementById(c.id);
+    if (el && el.value.trim()) {
+      parties.push(`${c.label} : ${el.value.trim()}`);
+    }
+  });
+
+  if (parties.length === 0) {
+    // Aucun champ rempli
+    document.getElementById('bg-memoire').style.borderColor = 'var(--danger)';
+    document.getElementById('bg-memoire').focus();
+    return null;
+  }
+
+  return parties.join(' | ');
+}
+
+function assemblerSecrets() {
+  const secrets = [];
+  const container = document.getElementById('secrets-container');
+  const blocks = container.querySelectorAll('.secret-block');
+
+  blocks.forEach((block, i) => {
+    const id = block.id.replace('secret-', '');
+    const type = document.getElementById(`secret-type-${id}`)?.value || 'Autre';
+    const desc = document.getElementById(`secret-desc-${id}`)?.value.trim() || '';
+    const reaction = document.getElementById(`secret-reaction-${id}`)?.value.trim() || '';
+    const volonte = secretVolontes[id] || 'indecis';
+
+    if (desc) {
+      secrets.push({ type, desc, reaction, volonte });
+    }
+  });
+
+  return secrets;
+}
+
+function buildSecretsPrompt() {
+  if (!window.charSecrets || window.charSecrets.length === 0) return '';
+
+  const volonteLabel = { oui: 'veut découvrir', non: 'refuse de découvrir', indecis: 'est indécis sur' };
+
+  let txt = '\n\n═══════════════════════════════\nSECRETS DU PERSONNAGE (MJ UNIQUEMENT — NE JAMAIS RÉVÉLER DIRECTEMENT)\n═══════════════════════════════\n';
+  txt += 'Ces secrets influencent SILENCIEUSEMENT le monde. Les PNJ peuvent réagir, des événements peuvent sembler attirés, mais ne jamais nommer ou expliquer directement.\n\n';
+
+  window.charSecrets.forEach((s, i) => {
+    txt += `SECRET ${i+1} — ${s.type}\n`;
+    txt += `Description : ${s.desc}\n`;
+    if (s.reaction) txt += `Réaction du monde : ${s.reaction}\n`;
+    txt += `Le personnage ${volonteLabel[s.volonte] || 'est indécis sur'} ce secret.\n`;
+    if (s.volonte === 'oui') txt += `→ Distille des indices de plus en plus clairs au fil du temps.\n`;
+    if (s.volonte === 'non') txt += `→ Les indices existent mais restent flous et évitables.\n`;
+    if (s.volonte === 'indecis') txt += `→ Des indices subtils apparaissent, le personnage peut choisir de les suivre ou non.\n`;
+    txt += '\n';
+  });
+
+  return txt;
 }

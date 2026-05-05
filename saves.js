@@ -11,6 +11,7 @@ const SUMMARY_THRESHOLD = 10;
 function saveGame() {
   const state = {
     pc: window.pc,
+    charSecrets: window.charSecrets || [],
     charBackground: window.charBackground,
     univers: window.univers,
     currentMode: window.currentMode,
@@ -69,6 +70,7 @@ function resumeGame() {
     const state = JSON.parse(raw);
     window.pc             = state.pc;
     window.charBackground = state.charBackground || '';
+    window.charSecrets     = state.charSecrets || [];
     window.univers        = state.univers || '';
     window.currentMode    = state.currentMode || 'exploration';
     window.currentPNJ     = state.currentPNJ || { nom:'', description:'' };
