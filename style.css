@@ -276,3 +276,37 @@ select option { background:var(--surface2); color:var(--text); }
   font-size: 9px !important;
   min-width: 50px !important;
 }
+
+/* ══════════════════════════════════════
+   CALENDRIER
+══════════════════════════════════════ */
+.calendrier-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface); border: 0.5px solid var(--border-soft);
+  border-radius: 8px; padding: 7px 12px; margin-bottom: 8px;
+  font-size: 11px; color: var(--text-muted); font-style: italic;
+}
+#calendrier-display { flex: 1; }
+.cal-btns { display: flex; gap: 5px; }
+.cal-btn {
+  font-family: 'Cinzel Decorative', serif; font-size: 9px;
+  color: var(--text-hint); background: transparent;
+  border: 0.5px solid var(--border-soft); border-radius: 4px;
+  padding: 3px 7px; cursor: pointer; transition: color 0.15s, border-color 0.15s;
+}
+.cal-btn:hover { color: var(--gold); border-color: var(--gold); }
+
+/* ══════════════════════════════════════
+   FUSION DÉVERROUILLÉE
+══════════════════════════════════════ */
+.story-fusion {
+  color: #7B6FEF;
+  font-size: 14px;
+  font-style: italic;
+  font-weight: 500;
+  margin: 0.4rem 0;
+  padding: 6px 10px;
+  background: rgba(91,79,207,0.1);
+  border-left: 2px solid #7B6FEF;
+  border-radius: 4px;
+}

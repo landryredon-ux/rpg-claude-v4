@@ -11,6 +11,7 @@ window.pc = {
   pvMax:650, pvCur:650, pfMax:600, pfCur:600, pmMax:50, pmCur:50,
   chance:10, competences:[], affinites:[], etat:'normal',
   inventaire:[], or:0, argent:0, cuivre:0,
+  jourAbsolu: 1,
   attributs:{
     force:4, endurance:5, agilite:5, dexterite:5,
     sante:5, perception:5, intelligence:5, volonte:5, charisme:5,
@@ -550,6 +551,41 @@ function parseDisplay(text, playerAction) {
   narr = narr.replace(/ETAT:(\w+)/gi,(_,e)=>{window.pc.etat=e.toLowerCase();return'';});
   narr = narr.replace(/ITEM_DEL:([^\n|[]+)/gi,(_,n)=>{removeItem(n.trim());addStory(`<p class="story-event">— ${esc(n.trim())} retiré.</p>`);return'';});
   narr = narr.replace(/ITEM:([^\n|[]+)/gi,(_,n)=>{addItem(n.trim());addStory(`<p class="story-event">+ ${esc(n.trim())} ajouté à l'inventaire.</p>`);return'';});
+
+  // Progression compétences
+  narr = narr.replace(/PROG:([^:\n]+):\+([0-9.]+)/gi, (_, nomComp, gain) => {
+    const g = parseFloat(gain);
+    const comp = window.pc.competences.find(c => c.nom === nomComp.trim());
+    if (comp) {
+      const ancVal = comp.val;
+      comp.val = Math.min(100, Math.round((comp.val + g) * 10) / 10);
+      const nouvRes = recalculerRessources(window.pc);
+      const diffPV = nouvRes.pvMax - window.pc.pvMax;
+      const diffPF = nouvRes.pfMax - window.pc.pfMax;
+      window.pc.pvMax = nouvRes.pvMax;
+      window.pc.pvCur = Math.min(window.pc.pvCur + Math.max(0, diffPV), nouvRes.pvMax);
+      window.pc.pfMax = nouvRes.pfMax;
+      window.pc.pfCur = Math.min(window.pc.pfCur + Math.max(0, diffPF), nouvRes.pfMax);
+      window.pc.pmMax = nouvRes.pmMax;
+      const fusions = checkFusions(window.pc);
+      fusions.forEach(fusionNom => {
+        const fc = window.pc.competences.find(c => c.nom === fusionNom);
+        if (fc) fc.val = 5;
+        addStory(`<p class="story-fusion">✦ Fusion déverrouillée : ${esc(fusionNom)} !</p>`);
+      });
+      addStory(`<p class="story-event">↑ ${esc(nomComp.trim())} : ${ancVal} → ${comp.val}</p>`);
+    }
+    return '';
+  });
+
+  // Temps / Calendrier
+  narr = narr.replace(/TEMPS:\+(\d+)/gi, (_, jours) => {
+    window.pc.jourAbsolu = (window.pc.jourAbsolu || 1) + parseInt(jours);
+    updateCalendrier();
+    addStory(`<p class="story-event">📅 ${parseInt(jours)} jour(s) passé(s) — ${formatCalendrier(window.pc.jourAbsolu)}</p>`);
+    return '';
+  });
+
   narr = narr.replace(/MONEY:([+-])(\d+)(po|pa|pc)/gi,(_,sign,val,type)=>{
     const v=parseInt(val)*(sign==='-'?-1:1);
     if(type==='po') window.pc.or=Math.max(0,window.pc.or+v);
@@ -612,6 +648,7 @@ function updateSheet() {
   const p = window.pc;
   const a = p.attributs || {};
   document.getElementById('sheet-name').textContent = p.name;
+  updateCalendrier();
   document.getElementById('sheet-sub').textContent = p.classe;
   document.getElementById('talent-val').textContent = `${p.talent} ×${p.talentMult}`;
   document.getElementById('etat-row').textContent = p.etat !== 'normal' ? `⚠ ${p.etat}` : '';
@@ -695,7 +732,7 @@ function restartGame(){
   window.storySummary=''; window.actionCount=0; window.currentMode='exploration';
   window.currentPNJ={nom:'',description:''};
   window.univers=''; window.charBackground='';
-  window.pc={name:'',classe:'',talent:'Normal',talentMult:1.0,pvMax:80,pvCur:80,pfMax:80,pfCur:80,pmMax:40,pmCur:40,chance:10,competences:[],affinites:[],etat:'normal',inventaire:[],or:0,argent:0,cuivre:0};
+  window.pc={name:'',classe:'',talent:'Normal',talentMult:1.0,pvMax:80,pvCur:80,pfMax:80,pfCur:80,pmMax:40,pmCur:40,chance:10,competences:[],affinites:[],etat:'normal',inventaire:[],or:0,argent:0,cuivre:0,jourAbsolu:1,attributs:{force:4,endurance:5,agilite:5,dexterite:5,sante:5,perception:5,intelligence:5,volonte:5,charisme:5,mana:3,affinite_feu:0,affinite_eau:0,affinite_terre:0,affinite_vent:0,affinite_lumiere:0,affinite_ombre:0}};
   if(panelOpen)togglePanel();
   if(skillsPanelOpen)toggleSkillsPanel();
   checkSavedGame();
@@ -705,6 +742,18 @@ function restartGame(){
    HELPERS
 ────────────────────────────────────────────────────── */
 function addStory(html){const b=document.getElementById('story-box');const d=document.createElement('div');d.innerHTML=html;b.appendChild(d);b.scrollTop=b.scrollHeight;}
+
+function updateCalendrier() {
+  const el = document.getElementById('calendrier-display');
+  if (el) el.textContent = formatCalendrier(window.pc.jourAbsolu || 1);
+}
+
+function avancerTemps(jours) {
+  window.pc.jourAbsolu = (window.pc.jourAbsolu || 1) + jours;
+  updateCalendrier();
+  addStory(`<p class="story-event">📅 ${jours} jour(s) passé(s) — ${formatCalendrier(window.pc.jourAbsolu)}</p>`);
+  saveGame();
+}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 

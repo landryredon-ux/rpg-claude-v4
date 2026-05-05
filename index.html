@@ -130,6 +130,16 @@
   <!-- ══════════ JEU ══════════ -->
   <div id="game-screen" class="hidden">
 
+    <!-- CALENDRIER -->
+    <div class="calendrier-bar">
+      <span id="calendrier-display">An 1 · Jour 1 · Saison des Fleurs · ☽ nouvelle · 🔴 nouvelle</span>
+      <div class="cal-btns">
+        <button class="cal-btn" onclick="avancerTemps(1)" title="+1 jour">+1j</button>
+        <button class="cal-btn" onclick="avancerTemps(7)" title="+1 semaine">+7j</button>
+        <button class="cal-btn" onclick="avancerTemps(30)" title="+1 mois">+30j</button>
+      </div>
+    </div>
+
     <!-- BARRE DE MODE -->
     <div class="mode-bar">
       <button id="mode-btn-exploration" class="mode-btn active" data-mode="exploration"

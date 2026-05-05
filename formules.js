@@ -186,3 +186,104 @@ function buildPuissanceResume(pc) {
 
   return `Niveau: ${niveauNarratif} | Dégâts arme ~${formatNombre(degatsBase)} | PV ${formatNombre(pc.pvMax)}`;
 }
+
+/* ──────────────────────────────────────────────────────
+   PROGRESSION DES COMPÉTENCES
+   Formule : Points = 100 × 1.1^CompActuelle
+   Source : SYSTEME_PROGRESSION_EXPONENTIEL.md
+────────────────────────────────────────────────────── */
+function pointsNecessaires(compActuelle) {
+  return Math.round(100 * Math.pow(1.1, compActuelle));
+}
+
+/* ──────────────────────────────────────────────────────
+   FUSIONS MAGIQUES — SEUILS DE DÉVERROUILLAGE
+────────────────────────────────────────────────────── */
+const FUSIONS = [
+  { nom:'Maîtrise Lave',         el1:'affinite_feu',     seuil1:20, el2:'affinite_terre',   seuil2:20 },
+  { nom:'Maîtrise Foudre',       el1:'affinite_vent',    seuil1:25, el2:'affinite_eau',     seuil2:25 },
+  { nom:'Maîtrise Glace',        el1:'affinite_eau',     seuil1:20, el2:'affinite_vent',    seuil2:20 },
+  { nom:'Maîtrise Explosion',    el1:'affinite_feu',     seuil1:30, el2:'affinite_vent',    seuil2:30 },
+  { nom:'Maîtrise Boue',         el1:'affinite_eau',     seuil1:20, el2:'affinite_terre',   seuil2:20 },
+  { nom:'Maîtrise Cristal',      el1:'affinite_terre',   seuil1:30, el2:'affinite_lumiere', seuil2:25 },
+  { nom:'Maîtrise Brume',        el1:'affinite_eau',     seuil1:25, el2:'affinite_vent',    seuil2:20 },
+  { nom:'Maîtrise Tempête',      el1:'affinite_vent',    seuil1:35, el2:'affinite_eau',     seuil2:30 },
+  { nom:'Maîtrise Poussière',    el1:'affinite_terre',   seuil1:25, el2:'affinite_vent',    seuil2:25 },
+  { nom:'Maîtrise Prisme',       el1:'affinite_lumiere', seuil1:40, el2:'affinite_eau',     seuil2:35 },
+  { nom:'Maîtrise Laser',        el1:'affinite_lumiere', seuil1:45, el2:'affinite_feu',     seuil2:40 },
+  { nom:'Maîtrise Poison',       el1:'affinite_eau',     seuil1:35, el2:'affinite_ombre',   seuil2:35 },
+  { nom:'Maîtrise Ténèbres',     el1:'affinite_ombre',   seuil1:40, el2:'affinite_terre',   seuil2:35 },
+  { nom:'Maîtrise Void',         el1:'affinite_ombre',   seuil1:50, el2:'affinite_vent',    seuil2:45 },
+  { nom:'Maîtrise Lumière Noire',el1:'affinite_ombre',   seuil1:55, el2:'affinite_lumiere', seuil2:50 },
+];
+
+function getMaîtriseFromAffinite(nomAffinite) {
+  // Convertit "affinite_feu" → "Maîtrise Feu"
+  const el = nomAffinite.replace('affinite_', '');
+  return 'Maîtrise ' + el.charAt(0).toUpperCase() + el.slice(1);
+}
+
+function getCompVal(competences, nom) {
+  const c = competences.find(c => c.nom === nom);
+  return c ? c.val : 0;
+}
+
+function checkFusions(pc) {
+  const unlocked = [];
+  FUSIONS.forEach(fusion => {
+    const val1 = getCompVal(pc.competences, getMaîtriseFromAffinite(fusion.el1));
+    const val2 = getCompVal(pc.competences, getMaîtriseFromAffinite(fusion.el2));
+    const fusionComp = pc.competences.find(c => c.nom === fusion.nom);
+    const dejaUnlocked = fusionComp && fusionComp.val > 0;
+    if (!dejaUnlocked && val1 >= fusion.seuil1 && val2 >= fusion.seuil2) {
+      unlocked.push(fusion.nom);
+    }
+  });
+  return unlocked;
+}
+
+/* ──────────────────────────────────────────────────────
+   CALENDRIER 400 JOURS / 2 LUNES
+   Source : UNIVERS_400_JOURS.md
+────────────────────────────────────────────────────── */
+const CALENDRIER = {
+  joursParAn: 400,
+  saisons: [
+    { nom:'Saison des Fleurs',   debut:1,   fin:80  },
+    { nom:'Saison du Soleil',    debut:81,  fin:160 },
+    { nom:'Saison des Récoltes', debut:161, fin:240 },
+    { nom:'Saison des Brumes',   debut:241, fin:320 },
+    { nom:'Saison des Glaces',   debut:321, fin:400 },
+  ],
+  lunes: [
+    { nom:'Lune d'Argent', cycle:40 },
+    { nom:'Lune de Sang',   cycle:53 },
+  ]
+};
+
+const PHASES_LUNE = ['nouvelle', 'croissant', 'premier quartier', 'gibbeuse croissante', 'pleine', 'gibbeuse décroissante', 'dernier quartier', 'décroissante'];
+
+function getPhaseLune(jourAbsolu, cycle) {
+  const pos = jourAbsolu % cycle;
+  const idx = Math.floor((pos / cycle) * PHASES_LUNE.length);
+  return PHASES_LUNE[idx];
+}
+
+function getSaison(jourAnnee) {
+  const j = ((jourAnnee - 1) % 400) + 1;
+  return CALENDRIER.saisons.find(s => j >= s.debut && j <= s.fin) || CALENDRIER.saisons[0];
+}
+
+function getInfoCalendrier(jourAbsolu) {
+  const annee = Math.floor((jourAbsolu - 1) / 400) + 1;
+  const jourAnnee = ((jourAbsolu - 1) % 400) + 1;
+  const saison = getSaison(jourAnnee);
+  const phaseLuneArgent = getPhaseLune(jourAbsolu, 40);
+  const phaseLuneSang   = getPhaseLune(jourAbsolu, 53);
+  return { annee, jourAnnee, saison: saison.nom, phaseLuneArgent, phaseLuneSang };
+}
+
+function formatCalendrier(jourAbsolu) {
+  const info = getInfoCalendrier(jourAbsolu);
+  return `An ${info.annee} · Jour ${info.jourAnnee} · ${info.saison} · ☽ ${info.phaseLuneArgent} · 🔴 ${info.phaseLuneSang}`;
+}

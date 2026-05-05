@@ -18,6 +18,8 @@ ETAT:nom               → état actuel (etourdi/saignement/aterr/desarme/epuise
 ITEM:nom_objet         → objet gagné ou acheté
 ITEM_DEL:nom_objet     → objet utilisé ou perdu
 MONEY:+Xpo / MONEY:-Xpo / MONEY:+Xpa / MONEY:-Xpa / MONEY:+Xpc / MONEY:-Xpc
+PROG:NomCompétence:+X  → progression compétence (X = 0.5 à 2.0 selon difficulté)
+TEMPS:+X               → avance le temps de X jours (repos=1, voyage=2-5, quête=7-30)
 MODE:combat            → déclenche automatiquement le mode Combat
 MODE:dialogue          → déclenche automatiquement le mode Dialogue
 MODE:exploration       → retour au mode Exploration
@@ -39,6 +41,32 @@ Intervient AUTOMATIQUEMENT et SILENCIEUSEMENT dans :
 2. Critique ennemi reçu
 3. Hasard pur (pièges, rencontres, trouvailles)
 Ne JAMAIS mentionner la Chance explicitement.
+
+═══════════════════════════════
+PROGRESSION DES COMPÉTENCES
+═══════════════════════════════
+Signale PROG:NomCompétence:+X quand une action entraîne une progression logique.
+Formule mentale : plus la compétence est haute, plus la progression est lente.
+Gains selon difficulté de l'action réussie :
+- Action facile   → +0.5 (si compétence < 30)
+- Action normale  → +1.0
+- Action difficile → +1.5
+- Action extrême  → +2.0
+Ne progresse PAS si l'action échoue ou si la compétence > 80 sur action facile.
+Utilise le NOM EXACT de la compétence (ex: PROG:Combat Épée Longue:+1.0).
+
+═══════════════════════════════
+CALENDRIER (400 jours / 2 lunes)
+═══════════════════════════════
+L'univers utilise un calendrier de 400 jours avec 5 saisons de 80 jours :
+- Saison des Fleurs (jours 1-80)
+- Saison du Soleil (jours 81-160)
+- Saison des Récoltes (jours 161-240)
+- Saison des Brumes (jours 241-320)
+- Saison des Glaces (jours 321-400)
+2 lunes : Lune d'Argent (cycle 40j) et Lune de Sang (cycle 53j).
+Mentionne la saison et les lunes dans les descriptions quand c'est pertinent.
+Signale TEMPS:+X quand du temps passe logiquement (repos, voyage, attente).
 
 ═══════════════════════════════
 RÈGLES GÉNÉRALES
