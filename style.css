@@ -312,18 +312,8 @@ select option { background:var(--surface2); color:var(--text); }
 }
 
 /* ══════════════════════════════════════
-   FORMULAIRE BACKGROUND STRUCTURÉ
+   BACKGROUND 3 ZONES
 ══════════════════════════════════════ */
-.bg-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-.bg-field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
 .bg-label {
   font-size: 11px;
   color: var(--gold-light);
@@ -334,12 +324,31 @@ select option { background:var(--surface2); color:var(--text); }
   color: var(--text-hint);
   font-size: 10px;
 }
-.bg-input {
-  min-height: 70px !important;
-  font-size: 13px !important;
-  padding: 8px 12px !important;
-  line-height: 1.5 !important;
+.bg-zone {
+  width: 100%;
+  min-height: 110px;
+  font-family: 'Crimson Pro', serif;
+  font-size: 15px;
+  background: var(--surface);
+  color: var(--text);
+  border: 0.5px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 12px 16px;
+  line-height: 1.7;
+  font-style: italic;
+  resize: vertical;
+  transition: border-color 0.15s;
 }
+.bg-zone:focus { outline: none; border-color: var(--gold); }
+.bg-zone::placeholder { color: var(--text-hint); font-size: 13px; }
+
+.bg-zone-secret {
+  border-color: rgba(91,79,207,0.3);
+  background: rgba(91,79,207,0.05);
+}
+.bg-zone-secret:focus { border-color: #7B6FEF; }
+
+.hint-secret strong { color: #9B8FFF; }
 
 /* SECRETS */
 .secret-block {

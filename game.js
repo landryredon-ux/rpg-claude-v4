@@ -742,11 +742,17 @@ function restartGame(){
   if(panelOpen)togglePanel();
   if(skillsPanelOpen)toggleSkillsPanel();
   // Réinitialiser le formulaire background
-  ['bg-apparence','bg-memoire','bg-perso','bg-formation','bg-magie','bg-motivation'].forEach(id => {
+  ['bg-sait','bg-sait-pas','bg-secrets'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
-  document.getElementById('secrets-container').innerHTML = `
+  volonteGlobal = 'indecis';
+  // Reset boutons volonté
+  const vbtns = document.querySelectorAll('.volonte-btn');
+  vbtns.forEach(b => { b.classList.remove('active'); if(b.dataset.val==='indecis') b.classList.add('active'); });
+  // Dummy pour éviter erreur
+  const sc = document.getElementById('secrets-container');
+  if(sc) sc.innerHTML = `
     <div class="secret-block" id="secret-0">
       <div class="secret-header">
         <span class="secret-num">Secret 1</span>
@@ -892,6 +898,14 @@ function toggleAttrs() {
 ────────────────────────────────────────────────────── */
 let secretCount = 1;
 const secretVolontes = { 0: 'indecis' };
+let volonteGlobal = 'indecis';
+
+function setVolonteGlobal(btn) {
+  volonteGlobal = btn.dataset.val;
+  btn.closest('.volonte-btns').querySelectorAll('.volonte-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (window.charSecrets && window.charSecrets.length > 0) window.charSecrets[0].volonte = volonteGlobal;
+}
 
 function setVolonte(btn) {
   const secretId = btn.dataset.secret;
@@ -946,71 +960,47 @@ function removeSecret(id) {
 }
 
 function assemblerBackground() {
-  const champs = [
-    { id:'bg-apparence',  label:'Apparence' },
-    { id:'bg-memoire',    label:'Souvenirs' },
-    { id:'bg-perso',      label:'Personnalité' },
-    { id:'bg-formation',  label:'Formation & expériences' },
-    { id:'bg-magie',      label:'Lien à la magie' },
-    { id:'bg-motivation', label:'Motivation' },
-  ];
+  const sait    = (document.getElementById('bg-sait')?.value || '').trim();
+  const saitPas = (document.getElementById('bg-sait-pas')?.value || '').trim();
 
-  const parties = [];
-  champs.forEach(c => {
-    const el = document.getElementById(c.id);
-    if (el && el.value.trim()) {
-      parties.push(`${c.label} : ${el.value.trim()}`);
-    }
-  });
-
-  if (parties.length === 0) {
-    // Aucun champ rempli
-    document.getElementById('bg-memoire').style.borderColor = 'var(--danger)';
-    document.getElementById('bg-memoire').focus();
+  if (!sait) {
+    const el = document.getElementById('bg-sait');
+    if (el) { el.style.borderColor = 'var(--danger)'; el.focus(); }
     return null;
   }
 
-  return parties.join(' | ');
+  let bg = sait;
+  if (saitPas) bg += ' | MYSTÈRES (que le personnage ne sait pas) : ' + saitPas;
+  return bg;
 }
 
 function assemblerSecrets() {
-  const secrets = [];
-  const container = document.getElementById('secrets-container');
-  const blocks = container.querySelectorAll('.secret-block');
-
-  blocks.forEach((block, i) => {
-    const id = block.id.replace('secret-', '');
-    const type = document.getElementById(`secret-type-${id}`)?.value || 'Autre';
-    const desc = document.getElementById(`secret-desc-${id}`)?.value.trim() || '';
-    const reaction = document.getElementById(`secret-reaction-${id}`)?.value.trim() || '';
-    const volonte = secretVolontes[id] || 'indecis';
-
-    if (desc) {
-      secrets.push({ type, desc, reaction, volonte });
-    }
-  });
-
-  return secrets;
+  const desc = (document.getElementById('bg-secrets')?.value || '').trim();
+  if (!desc) return [];
+  return [{ type:'Secrets', desc, reaction:'', volonte: volonteGlobal }];
 }
 
 function buildSecretsPrompt() {
   if (!window.charSecrets || window.charSecrets.length === 0) return '';
+  const s = window.charSecrets[0];
+  if (!s || !s.desc) return '';
 
-  const volonteLabel = { oui: 'veut découvrir', non: 'refuse de découvrir', indecis: 'est indécis sur' };
+  const volonteLabel = {
+    oui: 'Le personnage cherche activement à découvrir ses secrets → distille des indices de plus en plus clairs.',
+    non: 'Le personnage refuse de découvrir ses secrets → les indices existent mais restent flous et évitables.',
+    indecis: 'Le personnage est indécis → des indices subtils apparaissent, il peut choisir de les suivre ou non.'
+  };
 
-  let txt = '\n\n═══════════════════════════════\nSECRETS DU PERSONNAGE (MJ UNIQUEMENT — NE JAMAIS RÉVÉLER DIRECTEMENT)\n═══════════════════════════════\n';
-  txt += 'Ces secrets influencent SILENCIEUSEMENT le monde. Les PNJ peuvent réagir, des événements peuvent sembler attirés, mais ne jamais nommer ou expliquer directement.\n\n';
+  return `\n\n═══════════════════════════════
+SECRETS DU PERSONNAGE — MJ UNIQUEMENT
+NE JAMAIS RÉVÉLER DIRECTEMENT — INTÉGRER SILENCIEUSEMENT
+═══════════════════════════════
+${s.desc}
 
-  window.charSecrets.forEach((s, i) => {
-    txt += `SECRET ${i+1} — ${s.type}\n`;
-    txt += `Description : ${s.desc}\n`;
-    if (s.reaction) txt += `Réaction du monde : ${s.reaction}\n`;
-    txt += `Le personnage ${volonteLabel[s.volonte] || 'est indécis sur'} ce secret.\n`;
-    if (s.volonte === 'oui') txt += `→ Distille des indices de plus en plus clairs au fil du temps.\n`;
-    if (s.volonte === 'non') txt += `→ Les indices existent mais restent flous et évitables.\n`;
-    if (s.volonte === 'indecis') txt += `→ Des indices subtils apparaissent, le personnage peut choisir de les suivre ou non.\n`;
-    txt += '\n';
-  });
+${volonteLabel[s.volonte] || volonteLabel.indecis}
 
-  return txt;
+RÈGLE : Ces secrets influencent comment le monde RÉAGIT au personnage.
+Les PNJ peuvent avoir des réactions inexpliquées, des factions peuvent le chercher,
+des objets ou lieux peuvent réagir à sa présence — sans jamais nommer la raison directement.
+Les stats actuelles du personnage restent la limite absolue de ses capacités.`;
 }
